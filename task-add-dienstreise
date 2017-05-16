@@ -1,0 +1,42 @@
+# Short Script to generate my necessary tasks for business travels
+# Every journey obviously has a date, is assigned a project and a description
+# I need to 
+# 1. Apply for travel funding
+# 2. Book the journey and hotels
+# 3. Travel at the appointed date
+# 4. Formally account the costs
+
+project=${1:?Please give Project as first parameter}
+traveldate=${2:?Please give date of travel as second parameter}
+description=${3:?Please give description of travel as third parameter}
+shift 3
+
+
+function traveladder ()
+{
+  local project=$1
+  local date=$2
+  local description=$3
+  shift 3
+  local taskid=`task add project:${project} due:${date} "${description}" +reise $@ 2>/dev/null | sed 's/^Created\stask\s\([0-9][0-9]*\)\..*$/\1/'`
+  echo ${taskid}
+}
+
+
+traveltaskid=`traveladder ${project} ${traveldate} "${description}" priority:A $@`
+echo "Traveltask ID:${traveltaskid}"
+
+
+bookingid=`traveladder ${project} ${traveltaskid}.due-1d "Buchung: ${description}" scheduled:${traveltaskid}.due-1wk $@`
+echo "Booking ID:${bookingid}"
+
+antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description}" scheduled:${traveltaskid}.due-2wk $@`
+echo "Antrag ID: ${antragid}"
+
+abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description}" wait:${traveltaskid}.due scheduled:${traveltaskid}.due+1wk $@`
+echo "Antrag ID: ${abrechnungid}"
+
+
+task ${traveltaskid} modify depends:${bookingid} 2>/dev/null 1>/dev/null
+task ${traveltaskid} modify depends:${antragid} 2>/dev/null 1>/dev/null
+task ${abrechnungid} modify depends:${antragid} 2>/dev/null 1>/dev/null
