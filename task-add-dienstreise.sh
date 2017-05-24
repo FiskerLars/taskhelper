@@ -23,18 +23,36 @@ function traveladder ()
 }
 
 
-traveltaskid=`traveladder ${project} ${traveldate} "${description}" priority:A $@`
+function include_in_cv ()
+{
+for  VAR in "$@" ; do 
+	if [[ "$VAR" == "+cv" ]] ; then  
+		return 0;  
+	fi ;  
+done; 
+return 1
+}
+
+
+traveltaskid=`traveladder ${project} ${traveldate} "${description}" priority:A +reisend $@`
 echo "Traveltask ID:${traveltaskid}"
 
 
-bookingid=`traveladder ${project} ${traveltaskid}.due-1d "Buchung: ${description}" scheduled:${traveltaskid}.due-1wk $@`
+bookingid=`traveladder ${project} ${traveltaskid}.due-1d "Buchung: ${description}" scheduled:${traveltaskid}.due-1wk +buchung $@`
 echo "Booking ID:${bookingid}"
 
-antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description}" scheduled:${traveltaskid}.due-2wk $@`
+antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description}" +antrag scheduled:${traveltaskid}.due-2wk $@`
 echo "Antrag ID: ${antragid}"
 
-abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description}" wait:${traveltaskid}.due scheduled:${traveltaskid}.due+1wk $@`
-echo "Antrag ID: ${abrechnungid}"
+abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description}" +abrechnung wait:${traveltaskid}.due scheduled:${traveltaskid}.due+1wk $@` 
+echo "Abrechnung ID: ${abrechnungid}"
+
+if include_in_cv ${@} ; then
+	cvid=`traveladder me ${abrechnungid}.due "Reise ${description} in CV eintragen" priority:B $@`
+	echo "CV-Eintrag ID: ${cvid}"
+	task ${cvid} modify depends:${traveltaskid} 2>/dev/null 1>/dev/nul
+fi
+
 
 
 task ${traveltaskid} modify depends:${bookingid} 2>/dev/null 1>/dev/null
