@@ -44,6 +44,9 @@ echo "Booking ID:${bookingid}"
 antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description}" +antrag scheduled:${traveltaskid}.due-2wk $@`
 echo "Antrag ID: ${antragid}"
 
+berichtid=`traveladder ${project} ${traveltaskid}.due+1wk "Bericht: ${description}" +report $@`
+echo "Bericht I: ${berichtid}"
+
 abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description}" +abrechnung wait:${traveltaskid}.due scheduled:${traveltaskid}.due+1wk $@` 
 echo "Abrechnung ID: ${abrechnungid}"
 
@@ -57,4 +60,5 @@ fi
 
 task ${traveltaskid} modify depends:${bookingid} 2>/dev/null 1>/dev/null
 task ${traveltaskid} modify depends:${antragid} 2>/dev/null 1>/dev/null
+task ${berichtid} modify depends:${traveltaskid} 2>/dev/null 1>/dev/null
 task ${abrechnungid} modify depends:${antragid} 2>/dev/null 1>/dev/null
