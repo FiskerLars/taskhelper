@@ -6,6 +6,18 @@
 # 3. Travel at the appointed date
 # 4. Formally account the costs
 
+function print_usage ()
+{
+	echo "USAGE:"
+	echo "`basename ${0}` <project> <date> <description>"
+}
+
+
+if [[ $# < 1 ]] ; then 
+	print_usage
+	exit 1
+fi
+
 project=${1:?Please give Project as first parameter}
 traveldate=${2:?Please give date of travel as second parameter}
 description=${3:?Please give description of travel as third parameter}
@@ -34,20 +46,25 @@ return 1
 }
 
 
-traveltaskid=`traveladder ${project} ${traveldate} "${description}" priority:A +reisend $@`
+traveltaskid=`traveladder ${project} ${traveldate} "Reise: ${description}" \
+	priority:A +reisend $@`
 echo "Traveltask ID:${traveltaskid}"
 
 
-bookingid=`traveladder ${project} ${traveltaskid}.due-1d "Buchung: ${description}" scheduled:${traveltaskid}.due-1wk +buchung $@`
+bookingid=`traveladder ${project} ${traveltaskid}.due-1d "Buchung: ${description}" \
+	scheduled:${traveltaskid}.due-1wk +buchung $@`
 echo "Booking ID:${bookingid}"
 
-antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description}" +antrag scheduled:${traveltaskid}.due-2wk $@`
+antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description}" \
+	+antrag scheduled:${traveltaskid}.due-2wk $@`
 echo "Antrag ID: ${antragid}"
 
-berichtid=`traveladder ${project} ${traveltaskid}.due+1wk "Bericht: ${description}" +report $@`
+berichtid=`traveladder ${project} ${traveltaskid}.due+1wk "Bericht: ${description}" \
+	+report wait:${traveltaskid}.due $@`
 echo "Bericht I: ${berichtid}"
 
-abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description}" +abrechnung wait:${traveltaskid}.due scheduled:${traveltaskid}.due+1wk $@` 
+abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description}"\
+       	+abrechnung wait:${traveltaskid}.due scheduled:${traveltaskid}.due+1wk $@` 
 echo "Abrechnung ID: ${abrechnungid}"
 
 if include_in_cv ${@} ; then
