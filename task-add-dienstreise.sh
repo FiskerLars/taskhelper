@@ -10,6 +10,9 @@ function print_usage ()
 {
 	echo "USAGE:"
 	echo "`basename ${0}` <project> <date> <description>"
+	echo ""
+	echo "Special tags:"
+	echo "+cv add the journey/presentation to CV (includes extra task)"
 }
 
 
@@ -46,29 +49,29 @@ return 1
 }
 
 
-traveltaskid=`traveladder ${project} ${traveldate} "Reise: ${description}" \
+traveltaskid=`traveladder ${project} ${traveldate} "Reise: ${description} (${traveldate})" \
 	priority:A +reisend $@`
 echo "Traveltask ID:${traveltaskid}"
 
 
-bookingid=`traveladder ${project} ${traveltaskid}.due-1d "Buchung: ${description}" \
+bookingid=`traveladder ${project} ${traveltaskid}.due-1d "Buchung: ${description} (${traveldate})" \
 	scheduled:${traveltaskid}.due-1wk +buchung $@`
 echo "Booking ID:${bookingid}"
 
-antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description}" \
+antragid=`traveladder  ${project} ${traveltaskid}.due-1wk "Dienstreiseantrag: ${description} (${traveldate})" \
 	+antrag scheduled:${traveltaskid}.due-2wk $@`
 echo "Antrag ID: ${antragid}"
 
-berichtid=`traveladder ${project} ${traveltaskid}.due+1wk "Bericht: ${description}" \
+berichtid=`traveladder ${project} ${traveltaskid}.due+1wk "Bericht: ${description} (${traveldate})" \
 	+report wait:${traveltaskid}.due $@`
 echo "Bericht I: ${berichtid}"
 
-abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description}"\
+abrechnungid=`traveladder ${project} ${traveltaskid}.due+6month "Abrechnung Dienstreise: ${description} (${traveldate})"\
        	+abrechnung wait:${traveltaskid}.due scheduled:${traveltaskid}.due+1wk $@` 
 echo "Abrechnung ID: ${abrechnungid}"
 
 if include_in_cv ${@} ; then
-	cvid=`traveladder me ${abrechnungid}.due "Reise ${description} in CV eintragen" priority:B $@`
+	cvid=`traveladder me ${abrechnungid}.due "Reise ${description} (${traveldate}) in CV eintragen" priority:B $@`
 	echo "CV-Eintrag ID: ${cvid}"
 	task ${cvid} modify depends:${traveltaskid} 2>/dev/null 1>/dev/nul
 fi
